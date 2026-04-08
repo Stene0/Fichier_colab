@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dimensionnement Solaire IA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      background: #f5f4f0;
+      color: #1a1a18;
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+    :root {
+      --amber: #EF9F27; --amber-l: #FAEEDA; --amber-d: #633806;
+      --teal: #1D9E75;  --teal-l:  #E1F5EE; --teal-d:  #085041;
+      --s: #ffffff; --s2: #f5f4f0;
+      --bd: rgba(0,0,0,0.12);
+      --txt: #1a1a18; --muted: #5f5e5a; --hint: #888780;
+      --radius-md: 8px; --radius-lg: 12px;
+    }
+    @media (prefers-color-scheme: dark) {
+      body { background: #1a1a18; color: #f1efe8; }
+      :root {
+        --s: #2c2c2a; --s2: #232321;
+        --bd: rgba(255,255,255,0.12);
+        --txt: #f1efe8; --muted: #b4b2a9;
+      }
+    }
+    .app { max-width: 740px; margin: 0 auto; }
+
+    .hero { text-align: center; margin-bottom: 1.5rem; padding: 1.5rem 1rem; border-bottom: 0.5px solid var(--bd); }
+    .hero-tag { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--amber-d); background: var(--amber-l); padding: 4px 12px; border-radius: 100px; margin-bottom: .75rem; }
+    .sun { width: 10px; height: 10px; background: var(--amber); border-radius: 50%; }
+    .hero h1 { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 800; line-height: 1.2; margin-bottom: .4rem; }
+    .hero p { font-size: 13px; color: var(--muted); max-width: 460px; margin: 0 auto; line-height: 1.6; }
+
+    .steps { display: flex; gap: 6px; margin-bottom: 1.25rem; }
+    .sp { flex: 1; height: 4px; border-radius: 2px; background: var(--bd); transition: background .3s; }
+    .sp.active { background: var(--amber); }
+    .sp.done   { background: var(--teal); }
+
+    .card { background: var(--s); border: 0.5px solid var(--bd); border-radius: var(--radius-lg); padding: 1.1rem; margin-bottom: .75rem; }
+    .card-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; margin-bottom: .2rem; }
+    .card-sub   { font-size: 12px; color: var(--muted); margin-bottom: .9rem; line-height: 1.5; }
+
+    .field { margin-bottom: .9rem; }
+    .field label { display: block; font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 5px; }
+    .inp { width: 100%; padding: 9px 12px; border: 0.5px solid var(--bd); border-radius: var(--radius-md); font-family: 'Space Grotesk', sans-serif; font-size: 14px; background: var(--s); color: var(--txt); outline: none; transition: border-color .15s; }
+    .inp:focus { border-color: var(--amber); }
+    .kwh-w { position: relative; }
+    .kwh-w .inp { padding-right: 56px; }
+    .kwh-u { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 11px; color: var(--hint); pointer-events: none; }
+
+    /* Status API */
+    .api-status { display: flex; align-items: center; gap: 8px; font-size: 12px; padding: 8px 12px; border-radius: var(--radius-md); border: 0.5px solid var(--bd); background: var(--s2); margin-top: 8px; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--hint); flex-shrink: 0; }
+    .status-dot.ok      { background: var(--teal); }
+    .status-dot.error   { background: #e24b4a; }
+    .status-dot.loading { background: var(--amber); animation: pulse .8s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+    /* CATEGORIES */
+    .cat-section { margin-bottom: .5rem; border: 0.5px solid var(--bd); border-radius: var(--radius-md); overflow: hidden; }
+    .cat-header { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px 12px; background: var(--s2); transition: filter .15s; user-select: none; }
+    .cat-header:hover { filter: brightness(0.97); }
+    .cat-icon { font-size: 15px; width: 20px; text-align: center; }
+    .cat-name { font-size: 13px; font-weight: 500; flex: 1; }
+    .cat-badge { font-size: 11px; background: var(--amber-l); color: var(--amber-d); padding: 2px 8px; border-radius: 100px; }
+    .cat-chevron { font-size: 10px; color: var(--hint); transition: transform .2s; }
+    .cat-chevron.open { transform: rotate(90deg); }
+    .dev-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 6px; padding: 8px; background: var(--s); }
+
+    .dev-card { border: 0.5px solid var(--bd); border-radius: var(--radius-md); padding: 10px; background: var(--s); transition: border-color .15s; }
+    .dev-card.sel { border-color: var(--amber); background: var(--amber-l); }
+    .dev-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
+    .dev-name { font-size: 12px; font-weight: 500; line-height: 1.3; flex: 1; padding-right: 4px; }
+    .dev-w { font-size: 11px; color: var(--muted); white-space: nowrap; }
+    .qty-row { display: flex; align-items: center; margin-top: 8px; border: 0.5px solid var(--bd); border-radius: var(--radius-md); overflow: hidden; background: var(--s); }
+    .q-btn { width: 32px; height: 30px; border: none; background: transparent; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--txt); transition: background .1s; flex-shrink: 0; }
+    .q-btn:hover { background: var(--s2); }
+    .q-val { flex: 1; text-align: center; font-size: 13px; font-weight: 500; border: none; background: transparent; padding: 0; color: var(--txt); font-family: 'Space Grotesk', sans-serif; }
+    .q-label { font-size: 10px; color: var(--hint); text-align: center; margin-top: 3px; }
+
+    .puiss-bar { background: var(--s2); border: 0.5px solid var(--bd); border-radius: var(--radius-md); padding: 10px 14px; margin: .75rem 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .puiss-main { font-size: 14px; font-weight: 500; }
+    .puiss-kw { font-size: 13px; color: var(--muted); }
+
+    .sel-summary { margin-bottom: .75rem; }
+    .sel-head { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; padding-bottom: 4px; border-bottom: 0.5px solid var(--bd); }
+    .sel-row { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; border-bottom: 0.5px solid var(--bd); font-size: 12px; }
+    .sel-row:last-child { border-bottom: none; }
+
+    .btn { padding: 9px 18px; border-radius: var(--radius-md); font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: opacity .2s, transform .1s; border: 0.5px solid var(--bd); background: transparent; color: var(--txt); }
+    .btn:hover { background: var(--s2); }
+    .btn:active { transform: scale(.98); }
+    .btn-p { background: var(--amber); border-color: var(--amber); color: #fff; }
+    .btn-p:hover { opacity: .88; background: var(--amber); }
+    .btn-t { background: var(--teal); border-color: var(--teal); color: #fff; }
+    .btn-t:hover { opacity: .88; background: var(--teal); }
+    .nav { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: .75rem; }
+
+    .result-hero { background: var(--s2); border-radius: var(--radius-lg); padding: 1.25rem; text-align: center; margin-bottom: .75rem; border: 0.5px solid var(--bd); }
+    .r-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 5px; }
+    .r-val { font-family: 'Syne', sans-serif; font-size: 34px; font-weight: 800; color: var(--amber-d); }
+    .r-unit { font-size: 13px; color: var(--muted); margin-top: 2px; }
+    .reco-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin-bottom: .75rem; }
+    .reco-item { border: 0.5px solid var(--bd); border-radius: var(--radius-md); padding: .9rem; text-align: center; background: var(--s); }
+    .reco-lbl { font-size: 10px; color: var(--muted); margin-bottom: 3px; text-transform: uppercase; letter-spacing: .06em; }
+    .reco-v { font-family: 'Syne', sans-serif; font-size: 21px; font-weight: 700; }
+    .reco-s { font-size: 10px; color: var(--hint); margin-top: 2px; }
+    .conseil-card { background: var(--s); border: 0.5px solid var(--bd); border-left: 2px solid var(--teal); border-radius: 0 var(--radius-md) var(--radius-md) 0; padding: .9rem 1rem; margin-bottom: .75rem; }
+    .inputs-debug { background: var(--s2); border: 0.5px solid var(--bd); border-radius: var(--radius-md); padding: 10px 14px; font-size: 11px; color: var(--muted); margin-bottom: .75rem; font-family: monospace; line-height: 1.8; }
+    .disc { font-size: 11px; color: var(--hint); text-align: center; padding: .4rem; line-height: 1.5; }
+
+    .spin-wrap { text-align: center; padding: 2.5rem; }
+    .spinner { width: 28px; height: 28px; border: 2.5px solid var(--bd); border-top-color: var(--amber); border-radius: 50%; animation: spin .8s linear infinite; margin: 0 auto .75rem; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .err { background: #fcebeb; border: 0.5px solid #f09595; border-radius: var(--radius-md); padding: .9rem; color: #a32d2d; font-size: 12px; margin-bottom: .75rem; line-height: 1.6; }
+
+    code { background: var(--s2); padding: 1px 5px; border-radius: 4px; font-size: 11px; }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <div class="hero">
+    <div class="hero-tag"><div class="sun"></div>Dimensionnement solaire IA</div>
+    <h1>Trouvez votre installation<br>solaire idéale</h1>
+    <p>Connecté à votre modèle RandomForest entraîné sur vos données réelles.</p>
+  </div>
+
+  <div class="steps">
+    <div class="sp active" id="p0"></div>
+    <div class="sp" id="p1"></div>
+    <div class="sp" id="p2"></div>
+  </div>
+
+  <!-- ÉTAPE 0 : CONSOMMATION + CONFIG API -->
+  <div id="v0">
+    <div class="card">
+      <div class="card-title">Consommation journalière</div>
+      <div class="card-sub">Vérifiez votre facture JIRAMA ou estimez votre consommation quotidienne.</div>
+      <div class="field">
+        <label>Consommation en kWh par jour</label>
+        <div class="kwh-w">
+          <input class="inp" type="number" id="kwh" min="0.1" max="5000" step="0.1" placeholder="ex: 8.5">
+          <span class="kwh-u">kWh/j</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Connexion à votre modèle IA</div>
+      <div class="card-sub">Entrez l'adresse de votre API Python locale (serveur <code>api_solaire.py</code> en cours d'exécution).</div>
+      <div class="field">
+        <label>URL du serveur</label>
+        <input class="inp" type="text" id="api-url" value="https://supersphenoid-pipiest-kimber.ngrok-free.dev" placeholder="https://supersphenoid-pipiest-kimber.ngrok-free.dev">
+      </div>
+      <button class="btn" onclick="testApi()">Tester la connexion</button>
+      <div class="api-status" id="api-status">
+        <div class="status-dot" id="status-dot"></div>
+        <span id="status-txt">Non testé — cliquez sur "Tester la connexion"</span>
+      </div>
+    </div>
+
+    <div class="nav">
+      <span></span>
+      <button class="btn btn-p" onclick="goS1()">Continuer →</button>
+    </div>
+  </div>
+
+  <!-- ÉTAPE 1 : ÉQUIPEMENTS -->
+  <div id="v1" style="display:none">
+    <div class="card">
+      <div class="card-title">Vos équipements</div>
+      <div class="card-sub">Ajustez la quantité de chaque appareil avec − et +. La puissance instantanée totale se met à jour automatiquement.</div>
+      <div id="cat-list"></div>
+      <div class="puiss-bar">
+        <span class="puiss-main">Puissance instantanée totale : <strong id="p-total">0 W</strong></span>
+        <span class="puiss-kw" id="p-kw">0.000 kW</span>
+      </div>
+      <div class="sel-summary" id="sel-sum"></div>
+    </div>
+    <div class="nav">
+      <button class="btn" onclick="goS(0)">← Retour</button>
+      <button class="btn btn-p" onclick="goS2()">Analyser →</button>
+    </div>
+  </div>
+
+  <!-- ÉTAPE 2 : RÉSULTAT -->
+  <div id="v2" style="display:none">
+    <div id="lv" class="spin-wrap">
+      <div class="spinner"></div>
+      <div style="font-size:13px;color:var(--muted)">Votre modèle IA analyse les données…</div>
+    </div>
+    <div id="rv" style="display:none"></div>
+  </div>
+
+</div>
+
+<script>
+  // ============================================================
+  // DONNÉES ÉQUIPEMENTS — issues de model_puissance_total.xlsx
+  // Colonnes utilisées : NOM APPAREIL, PUISSANCE ABSORBEE (W), NB APPAREIL
+  // ============================================================
+  const CATS = [
+    { id:'froid', name:'Froid alimentaire', icon:'🧊', open:true, devices:[
+      {id:'ref-am',  name:'Réfrigérateur américain',       w:250,  defQty:4},
+      {id:'ref-grd', name:'Réfrigérateur grand modèle A+', w:150,  defQty:0},
+      {id:'ref-pt',  name:'Réfrigérateur petit modèle A+', w:60,   defQty:0},
+      {id:'cong',    name:'Congélateur',                   w:200,  defQty:3},
+      {id:'cham-fr', name:'Chambre froide',                w:1200, defQty:1},
+      {id:'cave-vin',name:'Cave à vin',                    w:110,  defQty:0},
+    ]},
+    { id:'cuisine', name:'Cuisine', icon:'🍳', open:false, devices:[
+      {id:'micro',   name:'Four micro-ondes',  w:900,  defQty:0},
+      {id:'four',    name:'Four traditionnel', w:5000, defQty:1},
+      {id:'plaque',  name:'Plaque de cuisson', w:2500, defQty:0},
+      {id:'hotte',   name:'Hotte aspirante',   w:200,  defQty:0},
+      {id:'grille',  name:'Grille-pain',       w:700,  defQty:0},
+      {id:'cafe',    name:'Cafetière',         w:900,  defQty:0},
+      {id:'expresso',name:'Machine expresso',  w:1200, defQty:0},
+      {id:'mixer',   name:'Mixer',             w:250,  defQty:0},
+      {id:'robot',   name:'Robot culinaire',   w:400,  defQty:0},
+      {id:'bouil',   name:'Bouilloire',        w:1000, defQty:0},
+      {id:'centri',  name:'Centrifugeuse',     w:300,  defQty:1},
+      {id:'rice',    name:'Rice cooker',       w:800,  defQty:0},
+    ]},
+    { id:'linge', name:'Lavage & entretien', icon:'🌊', open:false, devices:[
+      {id:'lave-a',  name:'Lave-linge A+',      w:1850, defQty:0},
+      {id:'lave-f',  name:'Lave-linge A froid', w:300,  defQty:0},
+      {id:'aspir',   name:'Aspirateur',          w:700,  defQty:0},
+      {id:'liss',    name:'Lisseur cheveux',     w:80,   defQty:0},
+      {id:'seche-ch',name:'Sèche-cheveux',       w:1400, defQty:0},
+    ]},
+    { id:'clim', name:'Climatisation & ventilation', icon:'❄️', open:false, devices:[
+      {id:'clim-c',  name:'Climatisation traditionnelle (cl. C)', w:1450, defQty:0},
+      {id:'clim-inv',name:'Climatisation inverter',               w:650,  defQty:2},
+      {id:'ventil',  name:"Ventilateur / Brasseur d'air",         w:40,   defQty:0},
+    ]},
+    { id:'av', name:'Audiovisuel & bureautique', icon:'📺', open:false, devices:[
+      {id:'tv',      name:'Télévision LED',       w:70,   defQty:0},
+      {id:'hifi',    name:'Chaîne hi-fi',          w:200,  defQty:0},
+      {id:'radio',   name:'Radio',                 w:40,   defQty:0},
+      {id:'sono',    name:'Sonorisation',          w:2000, defQty:1},
+      {id:'pc-port', name:'Ordinateur portable',   w:45,   defQty:0},
+      {id:'pc-bur',  name:'Ordinateur de bureau',  w:200,  defQty:0},
+      {id:'charge',  name:'Chargeur téléphone',    w:20,   defQty:0},
+      {id:'routeur', name:'Routeur / Switch',      w:15,   defQty:0},
+      {id:'box',     name:'Box internet',          w:10,   defQty:0},
+      {id:'deco',    name:'Décodeur TV',           w:30,   defQty:0},
+    ]},
+    { id:'eclairage', name:'Éclairage', icon:'💡', open:false, devices:[
+      {id:'led-int', name:'Éclairage intérieur LED', w:9,  defQty:25},
+      {id:'led-ext', name:'Éclairage extérieur LED', w:3,  defQty:0},
+      {id:'lamp-p',  name:'Lampe piscine',           w:50, defQty:0},
+    ]},
+    { id:'eau', name:'Eau & hydraulique', icon:'💧', open:false, devices:[
+      {id:'surpress',  name:'Suppresseur',               w:1000, defQty:1},
+      {id:'surpr-eco', name:'Suppresseur eco 80L/mn',    w:360,  defQty:0},
+      {id:'pomp-for',  name:'Pompe de forage',           w:1500, defQty:2},
+      {id:'pomp-imm',  name:'Pompe immergée',            w:750,  defQty:0},
+      {id:'pomp-pisc', name:'Pompe piscine',             w:1500, defQty:2},
+      {id:'grp-filt',  name:'Groupe filtration piscine', w:950,  defQty:0},
+    ]},
+    { id:'autre', name:'Divers', icon:'🔧', open:false, devices:[
+      {id:'volet', name:'Volet roulant', w:180,  defQty:0},
+      {id:'outil', name:'Outillages',   w:1000, defQty:0},
+    ]}
+  ];
+
+  let qty = {};
+  let kwhValue = 0;
+  let apiUrl = 'https://supersphenoid-pipiest-kimber.ngrok-free.dev';
+
+  function initQty() {
+    CATS.forEach(cat => cat.devices.forEach(d => { qty[d.id] = d.defQty; }));
+  }
+
+  // ── TEST DE CONNEXION API ──
+  async function testApi() {
+    const url = document.getElementById('api-url').value.trim();
+    apiUrl = url;
+    setStatus('loading', 'Connexion en cours…');
+    try {
+      const res = await fetch(url + '/health', { signal: AbortSignal.timeout(5000) });
+      const data = await res.json();
+      if (res.ok) setStatus('ok', `Connecté — ${data.message || 'Modèle opérationnel'}`);
+      else setStatus('error', `Erreur serveur : ${data.message}`);
+    } catch(e) {
+      setStatus('error', `Impossible de joindre ${url} — Vérifiez que api_solaire.py est lancé`);
+    }
+  }
+
+  function setStatus(state, msg) {
+    const dot = document.getElementById('status-dot');
+    const txt = document.getElementById('status-txt');
+    dot.className = 'status-dot ' + state;
+    txt.textContent = msg;
+  }
+
+  // ── NAVIGATION ──
+  function goS(n) {
+    [0,1,2].forEach(i => {
+      document.getElementById('v'+i).style.display = i===n ? '' : 'none';
+      const p = document.getElementById('p'+i);
+      p.classList.remove('active','done');
+      if(i < n) p.classList.add('done');
+      else if(i === n) p.classList.add('active');
+    });
+  }
+
+  function goS1() {
+    const v = parseFloat(document.getElementById('kwh').value);
+    if(!v || v <= 0) { alert('Veuillez entrer une consommation valide.'); return; }
+    apiUrl = document.getElementById('api-url').value.trim();
+    kwhValue = v;
+    renderCats();
+    goS(1);
+  }
+
+  function goS2() {
+    let totalW = 0;
+    CATS.forEach(cat => cat.devices.forEach(d => { totalW += d.w * (qty[d.id]||0); }));
+    if(totalW === 0) { alert('Veuillez sélectionner au moins un équipement (quantité > 0).'); return; }
+    goS(2);
+    document.getElementById('lv').style.display = '';
+    document.getElementById('rv').style.display = 'none';
+    fetchReco(totalW);
+  }
+
+  // ── APPEL AU MODÈLE IA ──
+  async function fetchReco(totalW) {
+    const puissKW = totalW / 1000;
+
+    // Ces deux valeurs = exactement les colonnes X de l'entraînement :
+    //   X[0] = CONSOMMATION EN KWH PAR LA JIRAMA ...  → kwhValue
+    //   X[1] = PUISSANCE INSTANTANNE TOTAL             → puissKW
+    const payload = {
+      consommation_kwh: kwhValue,
+      puissance_kw: puissKW
+    };
+
+    try {
+      const res = await fetch(apiUrl + '/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(10000)
+      });
+      if(!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || `Erreur HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      showResult(data, totalW);
+    } catch(e) {
+      document.getElementById('lv').style.display = 'none';
+      document.getElementById('rv').style.display = '';
+      document.getElementById('rv').innerHTML = `
+        <div class="err">
+          <strong>Erreur de connexion au modèle IA</strong><br>
+          ${e.message}<br><br>
+          Vérifiez que <code>api_solaire.py</code> est bien lancé sur <code>${apiUrl}</code>.<br>
+          Commande : <code>python api_solaire.py</code>
+        </div>
+        <button class="btn" onclick="goS(1)">← Retour</button>`;
+    }
+  }
+
+  // ── AFFICHAGE DES RÉSULTATS ──
+  function showResult(r, totalW) {
+    document.getElementById('lv').style.display = 'none';
+    const rv = document.getElementById('rv');
+    rv.style.display = '';
+    rv.innerHTML = `
+      <div class="result-hero">
+        <div class="r-label">Puissance instantanée totale analysée</div>
+        <div class="r-val">${(totalW/1000).toFixed(3)} kW</div>
+        <div class="r-unit">pour ${kwhValue} kWh/jour · ${totalW.toLocaleString()} W au total</div>
+      </div>
+      <div class="reco-grid">
+        <div class="reco-item">
+          <div class="reco-lbl">Batterie</div>
+          <div class="reco-v" style="color:var(--amber-d)">${r.batterie_kwh}</div>
+          <div class="reco-s">kWh</div>
+        </div>
+        <div class="reco-item">
+          <div class="reco-lbl">Panneau</div>
+          <div class="reco-v" style="color:var(--teal-d)">${r.panneau_wc}</div>
+          <div class="reco-s">Wc</div>
+        </div>
+        <div class="reco-item">
+          <div class="reco-lbl">Onduleur</div>
+          <div class="reco-v">${r.onduleur_kw}</div>
+          <div class="reco-s">kW</div>
+        </div>
+      </div>
+      <div class="conseil-card">
+        <div style="font-size:10px;color:var(--teal-d);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px;">Conseil</div>
+        <div style="font-size:13px;line-height:1.6">${r.conseil}</div>
+      </div>
+      <div class="inputs-debug">
+        Données envoyées au modèle →
+        consommation : <strong>${kwhValue} kWh/j</strong> ·
+        puissance totale : <strong>${(totalW/1000).toFixed(3)} kW</strong>
+      </div>
+      <div class="disc">Prédiction générée par votre modèle RandomForest entraîné sur vos données réelles.</div>
+      <div class="nav" style="margin-top:.75rem">
+        <button class="btn" onclick="restart()">Nouvelle analyse</button>
+      </div>`;
+  }
+
+  // ── ÉQUIPEMENTS ──
+  function changeQty(id, delta) {
+    qty[id] = Math.max(0, (qty[id]||0) + delta);
+    renderCats();
+  }
+  function setQty(id, val) {
+    const n = parseInt(val);
+    qty[id] = isNaN(n)||n<0 ? 0 : n;
+    renderCats();
+  }
+  function toggleCat(id) {
+    const cat = CATS.find(c => c.id===id);
+    if(cat) cat.open = !cat.open;
+    renderCats();
+  }
+  function renderCats() {
+    document.getElementById('cat-list').innerHTML = CATS.map(cat => {
+      const selCount = cat.devices.filter(d => qty[d.id]>0).length;
+      return `
+      <div class="cat-section">
+        <div class="cat-header" onclick="toggleCat('${cat.id}')">
+          <span class="cat-icon">${cat.icon}</span>
+          <span class="cat-name">${cat.name}</span>
+          ${selCount>0 ? `<span class="cat-badge">${selCount} appareil${selCount>1?'s':''}</span>` : ''}
+          <span class="cat-chevron ${cat.open?'open':''}">▶</span>
+        </div>
+        ${cat.open ? `<div class="dev-grid">${cat.devices.map(d => {
+          const q = qty[d.id]||0;
+          return `<div class="dev-card ${q>0?'sel':''}">
+            <div class="dev-top"><span class="dev-name">${d.name}</span><span class="dev-w">${d.w} W</span></div>
+            <div class="qty-row">
+              <button class="q-btn" onclick="changeQty('${d.id}',-1)">−</button>
+              <input class="q-val" type="number" min="0" value="${q}" onchange="setQty('${d.id}',this.value)" style="width:40px;">
+              <button class="q-btn" onclick="changeQty('${d.id}',1)">+</button>
+            </div>
+            <div class="q-label">${q>0 ? 'Total : '+(d.w*q).toLocaleString()+' W' : 'Quantité'}</div>
+          </div>`;
+        }).join('')}</div>` : ''}
+      </div>`;
+    }).join('');
+    updatePuiss();
+  }
+  function updatePuiss() {
+    let totalW = 0;
+    CATS.forEach(cat => cat.devices.forEach(d => { totalW += d.w*(qty[d.id]||0); }));
+    document.getElementById('p-total').textContent = totalW.toLocaleString()+' W';
+    document.getElementById('p-kw').textContent = (totalW/1000).toFixed(3)+' kW';
+    const items = [];
+    CATS.forEach(cat => cat.devices.forEach(d => { if((qty[d.id]||0)>0) items.push(d); }));
+    const sum = document.getElementById('sel-sum');
+    sum.innerHTML = items.length ? `<div class="sel-head">Récapitulatif (${items.length} type${items.length>1?'s':''})</div>`
+      + items.map(d=>`<div class="sel-row"><span>${d.name} <strong>× ${qty[d.id]}</strong></span><span style="color:var(--muted)">${(d.w*qty[d.id]).toLocaleString()} W</span></div>`).join('') : '';
+  }
+  function restart() { initQty(); document.getElementById('kwh').value=''; goS(0); }
+
+  initQty();
+</script>
+</body>
+</html>
