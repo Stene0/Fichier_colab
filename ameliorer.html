@@ -236,16 +236,16 @@
   // ============================================================
   const CATS = [
     { id:'froid', name:'Froid alimentaire', icon:'🧊', open:true, devices:[
-      {id:'ref-am',  name:'Réfrigérateur américain',       w:250,  defQty:4},
+      {id:'ref-am',  name:'Réfrigérateur américain',       w:250,  defQty:1},
       {id:'ref-grd', name:'Réfrigérateur grand modèle A+', w:150,  defQty:0},
       {id:'ref-pt',  name:'Réfrigérateur petit modèle A+', w:60,   defQty:0},
-      {id:'cong',    name:'Congélateur',                   w:200,  defQty:3},
-      {id:'cham-fr', name:'Chambre froide',                w:1200, defQty:1},
+      {id:'cong',    name:'Congélateur',                   w:200,  defQty:1},
+      {id:'cham-fr', name:'Chambre froide',                w:1200, defQty:0},
       {id:'cave-vin',name:'Cave à vin',                    w:110,  defQty:0},
     ]},
     { id:'cuisine', name:'Cuisine', icon:'🍳', open:false, devices:[
       {id:'micro',   name:'Four micro-ondes',  w:900,  defQty:0},
-      {id:'four',    name:'Four traditionnel', w:5000, defQty:1},
+      {id:'four',    name:'Four traditionnel', w:5000, defQty:0},
       {id:'plaque',  name:'Plaque de cuisson', w:2500, defQty:0},
       {id:'hotte',   name:'Hotte aspirante',   w:200,  defQty:0},
       {id:'grille',  name:'Grille-pain',       w:700,  defQty:0},
@@ -254,7 +254,7 @@
       {id:'mixer',   name:'Mixer',             w:250,  defQty:0},
       {id:'robot',   name:'Robot culinaire',   w:400,  defQty:0},
       {id:'bouil',   name:'Bouilloire',        w:1000, defQty:0},
-      {id:'centri',  name:'Centrifugeuse',     w:300,  defQty:1},
+      {id:'centri',  name:'Centrifugeuse',     w:300,  defQty:0},
       {id:'rice',    name:'Rice cooker',       w:800,  defQty:0},
     ]},
     { id:'linge', name:'Lavage & entretien', icon:'🌊', open:false, devices:[
@@ -266,14 +266,14 @@
     ]},
     { id:'clim', name:'Climatisation & ventilation', icon:'❄️', open:false, devices:[
       {id:'clim-c',  name:'Climatisation traditionnelle (cl. C)', w:1450, defQty:0},
-      {id:'clim-inv',name:'Climatisation inverter',               w:650,  defQty:2},
+      {id:'clim-inv',name:'Climatisation inverter',               w:650,  defQty:0},
       {id:'ventil',  name:"Ventilateur / Brasseur d'air",         w:40,   defQty:0},
     ]},
     { id:'av', name:'Audiovisuel & bureautique', icon:'📺', open:false, devices:[
       {id:'tv',      name:'Télévision LED',       w:70,   defQty:0},
       {id:'hifi',    name:'Chaîne hi-fi',          w:200,  defQty:0},
       {id:'radio',   name:'Radio',                 w:40,   defQty:0},
-      {id:'sono',    name:'Sonorisation',          w:2000, defQty:1},
+      {id:'sono',    name:'Sonorisation',          w:2000, defQty:0},
       {id:'pc-port', name:'Ordinateur portable',   w:45,   defQty:0},
       {id:'pc-bur',  name:'Ordinateur de bureau',  w:200,  defQty:0},
       {id:'charge',  name:'Chargeur téléphone',    w:20,   defQty:0},
@@ -282,16 +282,16 @@
       {id:'deco',    name:'Décodeur TV',           w:30,   defQty:0},
     ]},
     { id:'eclairage', name:'Éclairage', icon:'💡', open:false, devices:[
-      {id:'led-int', name:'Éclairage intérieur LED', w:9,  defQty:25},
+      {id:'led-int', name:'Éclairage intérieur LED', w:9,  defQty:10},
       {id:'led-ext', name:'Éclairage extérieur LED', w:3,  defQty:0},
       {id:'lamp-p',  name:'Lampe piscine',           w:50, defQty:0},
     ]},
     { id:'eau', name:'Eau & hydraulique', icon:'💧', open:false, devices:[
-      {id:'surpress',  name:'Suppresseur',               w:1000, defQty:1},
+      {id:'surpress',  name:'Suppresseur',               w:1000, defQty:0},
       {id:'surpr-eco', name:'Suppresseur eco 80L/mn',    w:360,  defQty:0},
-      {id:'pomp-for',  name:'Pompe de forage',           w:1500, defQty:2},
+      {id:'pomp-for',  name:'Pompe de forage',           w:1500, defQty:0},
       {id:'pomp-imm',  name:'Pompe immergée',            w:750,  defQty:0},
-      {id:'pomp-pisc', name:'Pompe piscine',             w:1500, defQty:2},
+      {id:'pomp-pisc', name:'Pompe piscine',             w:1500, defQty:0},
       {id:'grp-filt',  name:'Groupe filtration piscine', w:950,  defQty:0},
     ]},
     { id:'autre', name:'Divers', icon:'🔧', open:false, devices:[
